@@ -1,0 +1,4 @@
+{
+  "name": "Background Position Logger",
+  "permissions": ["geolocation", "background"]
+}
