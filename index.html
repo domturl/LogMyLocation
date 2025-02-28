@@ -1,0 +1,36 @@
+
+// Main HTML (index.html)
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Background Position Logger</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+    <h1>Background Position Logger</h1>
+    <button id="start">Start Logging</button>
+    <button id="stop">Stop Logging</button>
+
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('service-worker.js')
+                .then(function(registration) {
+                    console.log('Service Worker registered with scope:', registration.scope);
+                    const serviceWorker = registration.active || registration.installing || registration.waiting;
+
+                    document.getElementById('start').addEventListener('click', function() {
+                        serviceWorker.postMessage({ action: 'startLogging' });
+                    });
+
+                    document.getElementById('stop').addEventListener('click', function() {
+                        serviceWorker.postMessage({ action: 'stopLogging' });
+                    });
+
+                })
+                .catch(function(error) {
+                    console.log('Service Worker registration failed:', error);
+                });
+        }
+    </script>
+</body>
+</html>
