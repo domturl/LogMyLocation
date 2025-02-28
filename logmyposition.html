@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Position Logger</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: sans-serif;
+            padding: 20px;
+        }
+        #log {
+            margin-top: 20px;
+            border: 1px solid #ccc;
+            padding: 10px;
+            height: 200px;
+            overflow-y: scroll;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <h1>Position Logger</h1>
+    <p>Logging your position...</p>
+    <div id="log"></div>
+    <button id="saveKML">Save as KML</button>
+
+    <script>
+        const logElement = document.getElementById('log');
+        const saveKMLButton = document.getElementById('saveKML');
+        let logData = "";
+        let positionData = []; // Store coordinates for KML
+
+        function logPosition(position) {
+            const timestamp = new Date().toISOString();
+            const latitude = position.coords.latitude;
+            const longitude = position.coords.longitude;
+            const accuracy = position.coords.accuracy;
+
+            const logEntry = `${timestamp}: Lat: ${latitude}, Lon: ${longitude}, Acc: ${accuracy}m\n`;
+            logData += logEntry;
+            logElement.textContent = logData;
+
+            positionData.push({
+                latitude: latitude,
+                longitude: longitude,
+                timestamp: timestamp
+            });
+        }
+
+        function handleError(error) {
+            let errorMessage = "Geolocation error: ";
+            switch(error.code) {
+                case error.PERMISSION_DENIED:
+                    errorMessage += "Permission denied.";
+                    break;
+                case error.POSITION_UNAVAILABLE:
+                    errorMessage += "Position unavailable.";
+                    break;
+                case error.TIMEOUT:
+                    errorMessage += "Timeout.";
+                    break;
+                case error.UNKNOWN_ERROR:
+                    errorMessage += "Unknown error.";
+                    break;
+            }
+            logData += errorMessage + "\n";
+            logElement.textContent = logData;
+        }
+
+        function startLogging() {
+            if ("geolocation" in navigator) {
+                navigator.geolocation.watchPosition(logPosition, handleError, {
+                    enableHighAccuracy: true,
+                    timeout: 10000,
+                    maximumAge: 0
+                });
+            } else {
+                logData += "Geolocation is not available in this browser.\n";
+                logElement.textContent = logData;
+            }
+        }
+
+        startLogging();
+
+        saveKMLButton.addEventListener('click', function() {
+            if (positionData.length > 0) {
+                const kml = generateKML(positionData);
+                downloadKML(kml, 'position_log.kml');
+            } else {
+                alert('No location data to save.');
+            }
+        });
+
+        function generateKML(positions) {
+            let kml = `<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+<Document>
+<name>Position Log</name>
+<Placemark>
+<name>Location Trail</name>
+<LineString>
+<coordinates>`;
+
+            positions.forEach(pos => {
+                kml += `${pos.longitude},${pos.latitude},0\n`; // Longitude, Latitude, Altitude (0)
+            });
+
+            kml += `</coordinates>
+</LineString>
+</Placemark>
+</Document>
+</kml>`;
+
+            return kml;
+        }
+
+        function downloadKML(kml, filename) {
+            const blob = new Blob([kml], { type: 'application/vnd.google-earth.kml+xml' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+    </script>
+</body>
+</html>
