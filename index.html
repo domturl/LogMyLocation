@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Background Position Logger</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+  <h1>Background Position Logger</h1>
+  <button id="start">Start Logging</button>
+  <button id="stop">Stop Logging</button>
+  <button id="download">Download KML</button>
+  <div id="status">Service Worker Status: Unknown</div>
+  <div id="log"></div>
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('service-worker.js')
+        .then(function (registration) {
+          // ... (rest of the service worker code)
+        })
+        .catch(function (error) {
+          // ...
+        });
+    }
+
+    // Request location permission on page load
+    function requestLocationPermission() {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          function (position) {
+            console.log("Location permission granted.");
+          },
+          function (error) {
+            console.error("Error requesting location permission:", error);
+          }
+        );
+      } else {
+        console.log("Geolocation is not supported by this browser.");
+      }
+    }
+
+    requestLocationPermission(); // Call the function to request permission
+  </script>
+</body>
+</html>
