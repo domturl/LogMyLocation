@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Background Position Logger</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+</head>
+<body>
+  <h1>Background Position Logger</h1>
+  <button id="start">Start Logging</button>
+  <button id="stop">Stop Logging</button>
+  <button id="download">Download KML</button>
+  <div id="status">Service Worker Status: Unknown</div>
+  <div id="log"></div>
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('service-worker.js')
+        .then(function (registration) {
+          console.log('Service Worker registered with scope:', registration.scope);
+
+          // Check service worker status
+          function updateStatus(message) {
+            document.getElementById('status').textContent = message;
+          }
+
+          // Wait for the service worker to be active
+          navigator.serviceWorker.ready.then(function (registration) {
+            const serviceWorker = registration.active;
+
+            if (serviceWorker) {
+              updateStatus('Service Worker Status: Active');
+
+              // Now you can safely send messages
+              document.getElementById('start').addEventListener('click', function () {
+                serviceWorker.postMessage({ action: 'startLogging' });
+              });
+
+              document.getElementById('stop').addEventListener('click', function () {
+                serviceWorker.postMessage({ action: 'stopLogging' });
+              });
+
+              document.getElementById('download').addEventListener('click', function () {
+                serviceWorker.postMessage({ action: 'downloadKML' });
+              });
+
+            } else {
+              updateStatus('Service Worker Status: Not Found');
+            }
+          });
+
+          // Listen for log messages from the service worker
+          navigator.serviceWorker.addEventListener('message', function (event) {
+            if (event.data.action === 'kmlData') {
+              downloadKML(event.data.kml, 'position_log.kml');
+            } else if (event.data.action === 'logMessage') {
+              logMessage(event.data.message);
+            }
+          });
+
+          function downloadKML(kml, filename) {
+            const blob = new Blob([kml], { type: 'application/vnd.google-earth.kml+xml' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+          }
+
+          function logMessage(message) {
+            const logElement = document.getElementById('log');
+            logElement.textContent += message + '\n';
+          }
+
+        })
+        .catch(function (error) {
+          console.log('Service Worker registration failed:', error);
+          updateStatus('Service Worker Status: Registration Failed');
+        });
+    }
+  </script>
+</body>
+</html>
